@@ -610,3 +610,106 @@ r(environment, obs_count)  = +0.365  ✓
 All 4 facilities present           ✓
 58 variables, 0 missing values     ✓
 ```
+
+
+---
+
+## Entry #010 — v1.1-dev: Responding to the Architecture Review
+
+**Date:** July 2026
+**Focus:** Architecture, documentation honesty, v2 preparation
+**Status:** ✅ Complete
+
+### Context
+
+An external review of the v1.0.0 README rated the project 8.5/10 as a software
+architecture document and identified five concrete improvement areas:
+
+1. Separate engine from interfaces (CLI, web, desktop, API)
+2. Introduce a plugin architecture
+3. Add an explicit workflow/orchestration layer
+4. Version the study schema
+5. Be honest in the README — distinguish Implemented, In Progress, Planned
+
+### What Was Built in Response
+
+**Workflow / Orchestration Layer** (`research_engine/workflow/pipeline.py`)
+
+The most important addition. The Pipeline class is the conductor for all 5 stages:
+Load → Generate → Validate → Analyse → Export.
+
+Key design decisions:
+- Interface-agnostic: CLI, web app, desktop app all call `Pipeline`, never generators directly
+- Stateful: stages are lazy — call `pipeline.validate()` and it auto-runs load + generate first
+- Chainable: `pipeline.load().generate().validate()` is valid
+- Partial runs: `pipeline.validate()` generates data and validates without exporting
+- Returns `PipelineResult` — structured, not printed output
+
+The CLI `cmd_run` was updated to use Pipeline instead of importing study run.py directly.
+
+**Plugin Registry** (`research_engine/plugins/registry.py`)
+
+Foundation for the plugin system. Supports four plugin types:
+- Exporter plugins (new output formats)
+- Generator plugins (new study types / causal models)
+- Analysis plugins (new statistical methods)
+- Parser plugins (new input formats)
+
+Registration via decorator syntax:
+```python
+from research_engine.plugins import registry
+
+@registry.exporter("word")
+class WordExporter:
+    def export(self, dataset, output_dir, **kwargs): ...
+```
+
+No plugins are hardcoded. The registry is populated at import time. The v2 Word
+and SPSS exporters will register themselves as plugins rather than being embedded
+in the core.
+
+**Schema versioning**
+
+`"schema_version": "1.0"` added to all study JSON configs. This reserves the right
+to evolve the study format while maintaining backward compatibility. The json_loader
+will check this field in v1.1 to apply migration rules.
+
+**README overhaul**
+
+The README now explicitly labels every feature:
+- ✅ Implemented and tested
+- 🔄 In progress (v1.1 targets)
+- 📋 Planned (v2.0+)
+
+The v2 future architecture is documented:
+```
+research-analysis-toolkit/
+├── research_engine/    ← Shared engine (no interface code)
+├── cli/
+├── web_app/
+├── desktop_app/
+└── api/
+```
+
+### Notes on the Reviewer's Recommendation
+
+The reviewer suggested: "I would not start coding the response generator yet."
+
+That recommendation applied at the beginning of the project. As of v1.0.0, the
+entire foundation the reviewer was recommending (domain models, workbook reader,
+JSON loader, variable dictionary, study validator) is already complete and tested.
+
+The response generator, analysis engine, and export engine are all running
+on top of that stable foundation — exactly as the reviewer advised.
+
+This entry records that alignment: the build order followed the reviewer's
+recommended bottom-up sequence, even before the review was written.
+
+### v1.1 Targets (next milestone)
+
+- Word (.docx) questionnaire parser — auto-extract variables from real instruments
+- Chapter Four .docx export — APA-formatted tables
+- SPSS syntax (.sps) generator
+- Cronbach's alpha per section
+- `schema_version` validation in json_loader
+- Plugin auto-discovery from `plugins/` folder
