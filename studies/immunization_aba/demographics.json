@@ -1,0 +1,63 @@
+{
+  "age": {
+    "distribution": "normal",
+    "mean": 28,
+    "std": 6,
+    "min": 18,
+    "max": 55
+  },
+  "gender": {
+    "Female": 0.82,
+    "Male": 0.18
+  },
+  "marital_status": {
+    "Married": 0.68,
+    "Single": 0.16,
+    "Widowed": 0.1,
+    "Divorced/Separated": 0.06
+  },
+  "education": {
+    "No formal education": 0.1,
+    "Primary": 0.2,
+    "Secondary": 0.38,
+    "Tertiary": 0.32
+  },
+  "occupation": {
+    "Trader/Business": 0.3,
+    "Civil servant": 0.18,
+    "Housewife": 0.25,
+    "Student": 0.1,
+    "Artisan": 0.12,
+    "Unemployed": 0.05
+  },
+  "income_monthly_naira": {
+    "No income (<10,000)": 0.15,
+    "Low (10,000\u201330,000)": 0.32,
+    "Middle (30,001\u201370,000)": 0.35,
+    "High (>70,000)": 0.18
+  },
+  "distance_to_facility_km": {
+    "distribution": "exponential",
+    "scale": 2.5,
+    "min": 0.1,
+    "max": 20
+  },
+  "number_of_children": {
+    "1": 0.25,
+    "2": 0.3,
+    "3": 0.22,
+    "4": 0.13,
+    "5+": 0.1
+  },
+  "child_age_months": {
+    "distribution": "uniform",
+    "min": 0,
+    "max": 23
+  },
+  "previous_visits": {
+    "1 (first visit)": 0.18,
+    "2\u20133": 0.35,
+    "4\u20135": 0.28,
+    "6+": 0.19
+  }
+}
