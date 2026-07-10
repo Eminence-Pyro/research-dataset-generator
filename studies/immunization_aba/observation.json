@@ -1,0 +1,54 @@
+{
+  "checklist": [
+    {
+      "key": "cleanliness",
+      "label": "Facility was clean and tidy",
+      "domain": "environment"
+    },
+    {
+      "key": "seating_adequacy",
+      "label": "Adequate seating available",
+      "domain": "environment"
+    },
+    {
+      "key": "ventilation",
+      "label": "Good ventilation",
+      "domain": "environment"
+    },
+    {
+      "key": "vaccine_availability",
+      "label": "Vaccines were available and in stock",
+      "domain": "service"
+    },
+    {
+      "key": "cold_chain",
+      "label": "Cold chain equipment functioning",
+      "domain": "service"
+    },
+    {
+      "key": "staff_behaviour",
+      "label": "Staff were professional and courteous",
+      "domain": "service"
+    },
+    {
+      "key": "waiting_time",
+      "label": "Waiting time was reasonable (<30 min)",
+      "domain": "service"
+    },
+    {
+      "key": "overcrowding",
+      "label": "No overcrowding observed",
+      "domain": "environment"
+    },
+    {
+      "key": "health_edu_materials",
+      "label": "Health education materials available",
+      "domain": "environment"
+    },
+    {
+      "key": "infection_control",
+      "label": "Infection control practices observed",
+      "domain": "service"
+    }
+  ]
+}
