@@ -505,3 +505,108 @@ passed to exporters and report builders.
 | PDF export | Placeholder in exporters/pdf_exporter.py | Stage 10 extension |
 | Variable Discovery Engine | Stage 3 partially complete | Auto-build VD from Word questionnaire |
 | Web interface | Stage 11 — v2 | Streamlit or FastAPI |
+
+
+---
+
+## Entry #009 — Stage 11 Complete: CLI, README Overhaul, v1.0 Tagged
+
+**Date:** July 2026
+**Stage:** 11 — User Interface (CLI)
+**Status:** ✅ Complete — v1.0.0 RELEASED
+
+### What Was Built
+
+**Stage 11 — Command-Line Interface**
+
+`research_engine/cli/interface.py` — full CLI with 5 commands:
+
+| Command | Function |
+|---------|----------|
+| `run` | Full 7-step pipeline: load → generate → validate → export |
+| `list` | Discover all study folders in studies/ |
+| `info` | Print study metadata without generating data |
+| `validate` | Generate + validate only; no files written |
+| `sample` | Cochran / Yamane / Krejcie-Morgan calculator with recommendation |
+
+Design details:
+- ANSI colour output (green ✓, yellow ⚠, red ✗) — suppressed when not a tty
+- `--seed` flag for full reproducibility across runs
+- `--output` flag to redirect output directory
+- Graceful error handling: KeyboardInterrupt, missing study folder, bad config
+- `main.py` at the project root is the single entry point
+- `importlib.util.spec_from_file_location` used to load study runners
+  dynamically — no import path juggling needed for new studies
+
+**CLI Test Results**
+
+All 5 commands tested and verified:
+```
+list     → immunization_aba listed with title and n=120
+info     → full metadata: 5 sections, 25 items, 4 facilities with effects
+sample   → population=1200: Cochran=292, Yamane=300, Krejcie=292, Recommended=300
+validate → 14/14 checks (education rank warning noted — validate uses default ORDINAL_MAPS)
+run      → complete 7-step pipeline, 9-sheet Excel + 2 CSVs, exit code 0
+```
+
+### README.md — Complete Overhaul
+
+The README is now a fully professional project document covering:
+- What the project is and why (problem statement)
+- Quick start (5 lines to first output)
+- All CLI commands with examples
+- Project architecture tree (all packages and files)
+- The Causal Model — documented precisely with coefficients
+- Output formats and Excel sheet descriptions
+- Instructions for adding a new study
+- All 14 validation checks
+- Dependencies
+- Study metadata table (immunization_aba)
+- Version history
+- v2 Roadmap (12 prioritised items)
+
+### v1.0.0 — What Is Complete
+
+The full pipeline runs end-to-end from a single command:
+
+```
+python main.py run --study immunization_aba
+```
+
+Stages delivered:
+```
+✅  Stage 0  Foundation & Repository Architecture
+✅  Stage 1  Core Domain Model (10 domain classes)
+✅  Stage 2  Readers (JSON loader, Excel workbook reader)
+✅  Stage 3  Sample Size Engine (3 formulas + recommend())
+✅  Stage 5  Population Generator (Respondent objects from distributions)
+✅  Stage 6  Response Intelligence Engine ⭐ (causal model, Likert responses)
+✅  Stage 7  Observation Engine (Yes/No checklist, env/svc consistency)
+✅  Stage 8  Validation Engine (14 checks, ValidationReport)
+✅  Stage 9  Analysis Engine (frequencies, descriptives, crosstabs + chi-square)
+✅  Stage 10 Export Engine (9-sheet Excel, raw CSV, SPSS CSV + label file)
+✅  Stage 11 User Interface (CLI: run, list, info, validate, sample)
+```
+
+Pipeline performance (Seed 42, N=120):
+```
+Load           → 0.0s
+Generate demo  → 0.0s
+Generate resp  → 0.0s
+Generate obs   → 0.0s
+Build+validate → 0.0s
+Export Excel   → 1.2s  (9 sheets, 9000+ cells)
+Export CSVs    → 0.0s
+Total          → ~1.3s
+```
+
+### Validation Summary (v1.0.0, Seed 42)
+
+```
+14/14 passed  |  0 warnings  |  0 errors
+r(education, satisfaction) = +0.601  ✓
+r(distance, satisfaction)  = -0.027  ✓
+r(environment, obs_count)  = +0.365  ✓
+All 4 facilities present           ✓
+58 variables, 0 missing values     ✓
+```
