@@ -1,4 +1,6 @@
 {
+  "schema_version": "1.0",
+  "rat_version": "1.0.0",
   "title": "Pattern of Caregiver Satisfaction with Immunization Services",
   "setting": "Urban PHCs, Wards I-IV, Aba North LGA, Abia State",
   "population": "Caregivers of children 0-23 months attending immunization clinics",
