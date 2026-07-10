@@ -713,3 +713,54 @@ recommended bottom-up sequence, even before the review was written.
 - Cronbach's alpha per section
 - `schema_version` validation in json_loader
 - Plugin auto-discovery from `plugins/` folder
+
+
+---
+
+## Entry #011 — docs/ Directory and README Restructure
+
+**Date:** July 2026
+**Focus:** Documentation architecture
+**Status:** ✅ Complete
+
+### Context
+
+Feedback from the architecture review:
+
+> "One suggestion I'd make early is to treat the README.md as a product overview
+> and move detailed architecture and design decisions into a docs/ directory.
+> That keeps the README approachable for new users while allowing the deeper
+> technical documentation to grow without becoming unwieldy."
+
+### What Was Done
+
+**Created `docs/` directory with four files:**
+
+- `docs/index.md` — entry point, table of contents for the docs folder
+- `docs/architecture.md` — design principles, module map, pipeline, causal model,
+  data flow diagram, plugin system, future interface layout
+- `docs/study-schema.md` — complete JSON schema reference for all four study config
+  files (config, questionnaire, demographics, observation) with field tables and examples
+- `docs/contributing.md` — where to work for each type of contribution, code standards,
+  plugin authoring guide, issue reporting
+
+**README.md stripped to a product overview:**
+
+The README is now about 80 lines of real content — quick start, feature status table,
+one-paragraph explanation of each major feature, documentation links, no walls of text.
+
+Everything technical that was in the README (architecture diagram, causal model
+coefficients, Excel sheet descriptions, full validation check table, schema docs)
+now lives in `docs/` where it can grow without cluttering the entry point.
+
+### The Rule This Establishes
+
+```
+README.md        → "What is this, should I use it, how do I start?"
+docs/            → "How does it work, how do I extend it, what are the exact formats?"
+PROJECT_JOURNAL  → "Why was it built this way?"
+LEARNING_JOURNAL → "What lessons did building it teach?"
+CHANGELOG        → "What changed between versions?"
+```
+
+Each document has exactly one audience and one job.
