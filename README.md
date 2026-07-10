@@ -2,13 +2,13 @@
 
 > **Synthetic Research Dataset Generator & Statistical Analysis Engine**
 >
-> Build statistically valid, reproducible datasets for academic research
-> — from questionnaire design to formatted Excel output — in a single command.
+> Build statistically valid, reproducible datasets for academic research —
+> from questionnaire design to formatted Excel output — in a single command.
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](#)
+[![Version](https://img.shields.io/badge/version-1.1.0--dev-orange)](#)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
-[![Status](https://img.shields.io/badge/status-stable-brightgreen)](#)
+[![v1.0.0 Release](https://img.shields.io/badge/stable-v1.0.0-brightgreen)](https://github.com/Eminence-Pyro/research-analysis-toolkit/releases/tag/v1.0.0)
 
 ---
 
@@ -18,245 +18,270 @@ The Research Analysis Toolkit is a Python framework for generating, validating,
 and exporting synthetic research datasets that are statistically coherent and
 academically defensible.
 
-It was built to support health-science research projects where:
+It was built to support health-science research where:
 
-- The study design and instrument are finalised but data collection is ongoing
+- The study instrument is finalised but data collection is ongoing
 - A complete, realistic dataset is needed for analysis planning and code testing
 - Outputs must match SPSS/Excel formats expected by supervisors and examiners
 
-**The full pipeline runs in one command:**
-
-```bash
-python main.py run --study immunization_aba
-```
-
-**Output produced in ~1.5 seconds:**
-- A 9-sheet formatted Excel workbook (demographics, Likert data, descriptives,
-  frequency tables, crosstabulations, codebook, validation report)
-- A raw CSV (all labelled values)
-- An SPSS-ready CSV (numeric codes, 8-char column names) + label file
+The toolkit deliberately separates the **engine** (domain model, generators,
+validators, analysis, exporters) from any **interface** (CLI, web app, API).
+The same engine can power all of them without modification.
 
 ---
 
 ## Quick Start
 
 ```bash
-# 1. Clone
 git clone https://github.com/Eminence-Pyro/research-analysis-toolkit.git
 cd research-analysis-toolkit
-
-# 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Run the immunization study (seed=42 for reproducibility)
+# Run the full pipeline
 python main.py run --study immunization_aba
 
-# 4. Find your files
-ls output/immunization_aba/
+# Explore other commands
+python main.py list
+python main.py info   --study immunization_aba
+python main.py sample --population 1200
 ```
+
+---
+
+## Feature Status
+
+> Features are explicitly labelled to reflect the actual state of the codebase.
+> ✅ = implemented and tested · 🔄 = in progress · 📋 = planned
+
+### Core Engine
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Domain model (Study, Questionnaire, Respondent, Dataset) | ✅ | 10 typed domain classes |
+| JSON study config loader (`load_all()`) | ✅ | Returns `StudyBundle` |
+| Excel workbook reader | ✅ | Lazy-loaded, study-agnostic |
+| Sample size engine (Cochran, Yamane, Krejcie-Morgan) | ✅ | `recommend()` auto-selects formula |
+| Demographic generator | ✅ | Normal, exponential, categorical distributions |
+| **Causal response model** | ✅ | Education/income/distance → satisfaction |
+| Facility observation generator | ✅ | Env/service consistency enforced |
+| Validation engine (14 checks) | ✅ | `ValidationReport` with structured results |
+| Frequency tables | ✅ | Cumulative %, sort by value or frequency |
+| Descriptive statistics | ✅ | Mean, SD, Likert interpretation |
+| Cross-tabulation + chi-square | ✅ | Cramer's V effect size |
+| 9-sheet Excel exporter | ✅ | Raw, demographics, Likert, obs, descriptives, freq, crosstabs, codebook, validation |
+| Raw CSV exporter | ✅ | All labelled values |
+| SPSS-ready CSV exporter | ✅ | Numeric codes + label file |
+| CLI (5 commands) | ✅ | `run`, `list`, `info`, `validate`, `sample` |
+| **Workflow / orchestration layer** | ✅ | `Pipeline` class, interface-agnostic |
+| **Plugin registry** | ✅ | Foundation for custom exporters/generators |
+| Schema versioning in study configs | ✅ | `schema_version: "1.0"` in all study JSONs |
+
+### In Progress (v1.1)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Word (.docx) questionnaire parser | 🔄 | Auto-extract variables from real instruments |
+| Word (.docx) Chapter Four export | 🔄 | APA-formatted tables for thesis submission |
+| SPSS syntax (.sps) generator | 🔄 | Direct SPSS import with variable labels |
+| Cronbach's alpha reliability analysis | 🔄 | Per-section internal consistency |
+
+### Planned (v2.0)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| AI-assisted questionnaire interpretation | 📋 | LLM reads instrument → builds VariableDictionary |
+| Correlation matrix (Pearson/Spearman) | 📋 | Between-scale variable relationships |
+| ANOVA | 📋 | Satisfaction scores by demographic group |
+| Logistic/linear regression | 📋 | Predictors of overall satisfaction |
+| Chart generation (bar, pie, histogram) | 📋 | Matplotlib/plotly output |
+| PDF report | 📋 | Auto-generated research summary |
+| Web dashboard (Streamlit) | 📋 | Point-and-click generation + visualisation |
+| Desktop application | 📋 | Same engine, GUI interface |
+| REST API | 📋 | `POST /studies/{id}/run` |
+| Multi-language support | 📋 | i18n for questionnaire labels |
+| Study template scaffolding | 📋 | `python main.py new --template health_satisfaction` |
+| Multiple study designs | 📋 | Cohort, case-control, KAP, prevalence |
+| Plugin marketplace | 📋 | Community-contributed generators/exporters |
+
+---
+
+## Architecture
+
+```
+research-analysis-toolkit/
+│
+├── main.py                           ← Single CLI entry point
+├── requirements.txt
+│
+├── research_engine/                  ← Core engine (interface-agnostic)
+│   ├── models/                       ← Domain model (Stage 1)
+│   │   ├── variable.py               ← Variable, VariableDictionary, MeasurementScale
+│   │   ├── questionnaire.py          ← Question, Section, Questionnaire
+│   │   ├── study.py                  ← Study, Facility, StudyDesign
+│   │   ├── respondent.py             ← Respondent, Response, Observation
+│   │   └── dataset.py                ← Dataset
+│   │
+│   ├── parsers/                      ← Readers (Stage 2)
+│   │   ├── json_loader.py            ← load_all() → StudyBundle
+│   │   ├── workbook_reader.py        ← Excel framework reader
+│   │   └── questionnaire_parser.py   ← 🔄 Word/PDF instrument parser
+│   │
+│   ├── generators/                   ← Data generators (Stages 3–7)
+│   │   ├── sample_size.py            ← Cochran, Yamane, Krejcie-Morgan
+│   │   ├── demographics.py           ← Respondent objects from distributions
+│   │   ├── responses.py              ← Causal response model ⭐
+│   │   └── observations.py           ← Facility observation checklists
+│   │
+│   ├── validators/                   ← Data quality (Stage 8)
+│   │   └── dataset_validator.py      ← 14 checks, ValidationReport
+│   │
+│   ├── analysis/                     ← Statistics (Stage 9)
+│   │   ├── frequencies.py            ← FrequencyTable, cumulative %
+│   │   ├── descriptives.py           ← DescriptiveStats, LikertSummary
+│   │   └── crosstabs.py              ← CrosstabResult, chi-square, Cramer's V
+│   │
+│   ├── exporters/                    ← File output (Stage 10)
+│   │   ├── excel_exporter.py         ← 9-sheet .xlsx workbook
+│   │   ├── csv_exporter.py           ← Raw CSV + SPSS CSV + label file
+│   │   ├── word_exporter.py          ← 🔄 Chapter Four .docx tables
+│   │   └── spss_exporter.py          ← 🔄 SPSS syntax (.sps) generator
+│   │
+│   ├── workflow/                     ← Orchestration layer ✅ NEW
+│   │   └── pipeline.py               ← Pipeline class — all 5 stages
+│   │
+│   ├── plugins/                      ← Plugin system ✅ NEW
+│   │   └── registry.py               ← PluginRegistry — decorator + lookup
+│   │
+│   ├── reports/                      ← Report builders
+│   │   ├── chapter_four.py           ← 🔄 Chapter Four table generator
+│   │   └── codebook.py               ← Codebook document builder
+│   │
+│   └── cli/                          ← CLI (Stage 11)
+│       └── interface.py              ← run, list, info, validate, sample
+│
+├── studies/                          ← Study configurations (study-agnostic engine)
+│   └── immunization_aba/
+│       ├── config.json               ← Study metadata (schema_version: "1.0")
+│       ├── questionnaire.json
+│       ├── demographics.json
+│       ├── observation.json
+│       └── run.py                    ← Study-specific maps and pipeline call
+│
+└── output/                           ← Generated files (gitignored)
+```
+
+### Future interface layout (v2)
+
+```
+research-analysis-toolkit/
+├── research_engine/    ← Shared engine (unchanged)
+├── cli/                ← Current CLI
+├── web_app/            ← 📋 Streamlit dashboard
+├── desktop_app/        ← 📋 GUI application
+├── api/                ← 📋 REST API (FastAPI)
+└── studies/
+```
+
+---
+
+## The Causal Response Model
+
+The Response Intelligence Engine models the known causal relationships
+in health-service satisfaction research:
+
+```
+Education level    ──► base satisfaction   (+0.15 per rank above median)
+Income level       ──► base satisfaction   (+0.08 per rank above median)
+Previous visits    ──► base satisfaction   (+0.12 — familiarity effect)
+Facility effect    ──► base satisfaction   (configurable ±0.0 to ±0.5)
+Distance to PHC    ──► environment section  (penalty up to −0.5)
+Distance to PHC    ──► waiting-time item    (penalty up to −1.0)
+Gaussian noise     ──► each item           (SD=0.55 — realistic variance)
+```
+
+Validated correlations (seed=42, N=120):
+- r(education, satisfaction) = **+0.601** ✓ (expected: positive)
+- r(distance, satisfaction)  = **−0.027** ✓ (expected: negative)
+- r(environment, obs_count)  = **+0.365** ✓ (expected: positive)
 
 ---
 
 ## CLI Commands
 
-```
-python main.py run      --study STUDY [--seed N] [--output DIR]
+```bash
+# Full pipeline: generate → validate → analyse → export
+python main.py run      --study immunization_aba [--seed N] [--output DIR]
+
+# Discover studies
 python main.py list
-python main.py info     --study STUDY
-python main.py validate --study STUDY [--seed N]
+
+# Study metadata (no generation)
+python main.py info     --study immunization_aba
+
+# Validate without exporting
+python main.py validate --study immunization_aba [--seed N]
+
+# Sample size calculator
 python main.py sample   --population N [--confidence 0.95] [--margin 0.05]
 ```
-
-| Command | What it does |
-|---------|-------------|
-| `run` | Full pipeline: load → generate → validate → analyse → export |
-| `list` | List all study folders in `studies/` |
-| `info` | Print study metadata (design, facilities, questionnaire structure) |
-| `validate` | Generate data and run all validation checks — no export |
-| `sample` | Compute Cochran / Yamane / Krejcie-Morgan sample size recommendations |
-
-### Examples
-
-```bash
-# Run with a different seed
-python main.py run --study immunization_aba --seed 123
-
-# Custom output directory
-python main.py run --study immunization_aba --output ./my_results
-
-# Just validate — no files written
-python main.py validate --study immunization_aba
-
-# Sample size for a known population of 800, 99% confidence
-python main.py sample --population 800 --confidence 0.99
-
-# Sample size for unknown population
-python main.py sample
-```
-
----
-
-## Project Architecture
-
-```
-research-analysis-toolkit/
-│
-├── main.py                          ← Single CLI entry point
-├── requirements.txt
-│
-├── research_engine/                 ← Core library
-│   ├── models/                      ← Stage 1: Domain model
-│   │   ├── variable.py              ← Variable, VariableDictionary, MeasurementScale
-│   │   ├── questionnaire.py         ← Question, Section, Questionnaire
-│   │   ├── study.py                 ← Study, Facility, StudyDesign
-│   │   ├── respondent.py            ← Respondent, Response, Observation
-│   │   └── dataset.py               ← Dataset
-│   │
-│   ├── parsers/                     ← Stage 2: Readers
-│   │   ├── json_loader.py           ← load_all() → StudyBundle
-│   │   └── workbook_reader.py       ← Excel framework reader
-│   │
-│   ├── generators/                  ← Stages 3–7: Data generation
-│   │   ├── sample_size.py           ← Cochran, Yamane, Krejcie-Morgan
-│   │   ├── demographics.py          ← Synthetic respondent demographics
-│   │   ├── responses.py             ← Likert responses (causal model) ⭐
-│   │   └── observations.py          ← Facility observation checklists
-│   │
-│   ├── validators/                  ← Stage 8: Data quality
-│   │   └── dataset_validator.py     ← 14 validation checks, ValidationReport
-│   │
-│   ├── analysis/                    ← Stage 9: Statistical analysis
-│   │   ├── frequencies.py           ← Frequency tables, cumulative %
-│   │   ├── descriptives.py          ← Mean/SD, Likert summaries (Chapter Four)
-│   │   └── crosstabs.py             ← Crosstabulation + chi-square + Cramer's V
-│   │
-│   ├── exporters/                   ← Stage 10: File output
-│   │   ├── excel_exporter.py        ← 9-sheet formatted .xlsx workbook
-│   │   └── csv_exporter.py          ← Raw CSV + SPSS-ready CSV + label file
-│   │
-│   └── cli/                         ← Stage 11: User interface
-│       └── interface.py             ← CLI: run, list, info, validate, sample
-│
-├── studies/
-│   └── immunization_aba/            ← Study: Caregiver Satisfaction, Aba North
-│       ├── config.json              ← Study metadata + facilities
-│       ├── questionnaire.json       ← 25-item instrument (5 sections)
-│       ├── demographics.json        ← Population distributions
-│       ├── observation.json         ← 10-item facility checklist
-│       └── run.py                   ← Study-specific pipeline runner
-│
-└── output/
-    └── immunization_aba/            ← Generated files (gitignored)
-```
-
----
-
-## The Causal Model (Why the Data Is Realistic)
-
-The Response Intelligence Engine does not assign random Likert values.
-It models the known causal relationships between demographics and satisfaction:
-
-```
-Education level    ──► base satisfaction   (+0.15 per rank above median)
-Income level       ──► base satisfaction   (+0.08 per rank above median)
-Previous visits    ──► base satisfaction   (+0.12 per rank — familiarity effect)
-Facility effect    ──► base satisfaction   (configurable per facility, ±0.3–0.5)
-Distance to PHC    ──► environment section  (negative penalty — up to -0.5)
-Distance to PHC    ──► waiting-time item    (strongest penalty — up to -1.0)
-Gaussian noise     ──► each item           (SD=0.55 — realistic response variance)
-```
-
-This produces:
-- Positive education–satisfaction correlation (r ≈ 0.60, validated)
-- Negative distance–satisfaction correlation (r ≈ -0.03 to -0.10, validated)
-- Positive observation–environment correlation (r ≈ 0.28–0.37, validated)
-- Plausible between-facility variation in mean scores
-
----
-
-## Outputs
-
-### Excel Workbook (9 sheets)
-
-| Sheet | Contents |
-|-------|----------|
-| Raw Dataset | All 58 variables, 120 rows, alternating row colours |
-| Demographics | Respondent demographic data only |
-| Questionnaire Data | 25 Likert items + 5 section means + overall mean + category |
-| Observation Data | 10 facility checklist items + obs_yes_count |
-| Descriptive Statistics | Per-item mean, SD, interpretation — the Chapter Four table |
-| Frequency Tables | Categorical variable distributions with cumulative % |
-| Crosstabulations | 4 crosstabs (gender/education/marital/occupation × satisfaction) with χ² and Cramer's V |
-| Codebook | Full variable dictionary — name, label, scale, allowed values, SPSS codes |
-| Validation Report | 14 quality checks with colour-coded pass/warn/error status |
-
-### CSV Files
-
-- **Raw CSV** — all variables, labelled string values
-- **SPSS CSV** — numeric codes only, 8-char column names, SPSS-importable
-- **Label file** — companion `.txt` with SPSS variable labels and value codes
 
 ---
 
 ## Adding a New Study
 
-1. Create a folder: `studies/your_study_name/`
-2. Add four JSON config files (copy from `studies/immunization_aba/` and adapt):
-   - `config.json` — study metadata, facilities, target N
-   - `questionnaire.json` — sections and Likert items
-   - `demographics.json` — demographic variable distributions
-   - `observation.json` — facility checklist items
-3. Copy `studies/immunization_aba/run.py` → `studies/your_study_name/run.py`
-4. Update `ORDINAL_MAPS`, `SPSS_MAPS`, and `CROSSTAB_PAIRS` in `run.py`
-5. Run: `python main.py run --study your_study_name`
+1. Create `studies/your_study/`
+2. Add four JSON files (copy from `studies/immunization_aba/` and adapt):
+   `config.json`, `questionnaire.json`, `demographics.json`, `observation.json`
+3. Set `"schema_version": "1.0"` in `config.json`
+4. Copy `studies/immunization_aba/run.py` → `studies/your_study/run.py`
+5. Update `ORDINAL_MAPS`, `SPSS_MAPS`, `CROSSTAB_PAIRS`
+6. Run: `python main.py run --study your_study`
 
-No changes to `research_engine/` are needed for a new study.
+**No changes to `research_engine/` are needed for a new study.**
 
 ---
 
 ## Validation Checks (14)
 
-| Check | What it verifies |
-|-------|-----------------|
-| Sample size | n ≥ target |
-| Unique IDs | No duplicate respondent IDs |
-| Likert range | All items within valid 1–5 range |
-| Education–satisfaction | Positive correlation (causal model) |
-| Distance–satisfaction | Negative correlation (accessibility effect) |
-| Observation consistency | Environment score ↔ observation data agree |
-| Missing values | Zero missing values in synthetic data |
-| Satisfaction distribution | Category counts reported |
-| Section means (×5) | Mean and SD per section |
-| Facility representation | All facilities present in dataset |
+| # | Check | Threshold |
+|---|-------|-----------|
+| 1 | Sample size | n ≥ target |
+| 2 | Unique IDs | 0 duplicates |
+| 3 | Likert range | All items 1–5 |
+| 4 | Education–satisfaction correlation | r > 0 |
+| 5 | Distance–satisfaction correlation | r < 0 |
+| 6 | Observation–environment consistency | r > 0 |
+| 7 | Missing values | 0 |
+| 8 | Satisfaction distribution | Counts reported |
+| 9–13 | Section means (×5) | Mean + SD per section |
+| 14 | Facility representation | All facilities present |
+
+---
+
+## Current Study: Immunization Satisfaction, Aba North
+
+| | |
+|-|-|
+| Title | Pattern of Caregiver Satisfaction with Immunization Services |
+| Design | Cross-sectional |
+| Setting | Urban PHCs, Wards I–IV, Aba North LGA, Abia State |
+| Population | Caregivers of children 0–23 months |
+| Sample | 120 (30 per facility × 4 PHCs) |
+| Sampling | Consecutive |
+| Instrument | 25 Likert items, 5 sections |
+| Derived variables | Section means + overall mean + satisfaction category |
+| Observations | 10-item facility checklist |
+| **Total variables** | **58** |
 
 ---
 
 ## Dependencies
 
 ```
-numpy>=1.24
-openpyxl>=3.1
-scipy>=1.11       # chi-square p-values (optional — fallback built in)
+numpy>=1.24.0
+openpyxl>=3.1.0
+scipy>=1.11.0
 ```
-
-Install: `pip install -r requirements.txt`
-
----
-
-## Current Study: Immunization Satisfaction, Aba North
-
-| Property | Value |
-|----------|-------|
-| Title | Pattern of Caregiver Satisfaction with Immunization Services |
-| Design | Cross-sectional |
-| Setting | Urban PHCs, Wards I–IV, Aba North LGA, Abia State |
-| Population | Caregivers of children 0–23 months |
-| Sample size | 120 (30 per facility × 4 PHCs) |
-| Sampling | Consecutive |
-| Instrument | 25 Likert items across 5 sections |
-| Derived variables | 5 section means + overall mean + satisfaction category |
-| Observations | 10-item facility checklist |
-| **Total variables** | **58** |
 
 ---
 
@@ -264,44 +289,12 @@ Install: `pip install -r requirements.txt`
 
 | Version | Date | Summary |
 |---------|------|---------|
-| v1.0.0 | July 2026 | Full pipeline: domain model, readers, generators, validators, analysis, exporters, CLI |
-| v0.1.0 | June 2026 | Initial dataset generator (rdg/ package, plain dicts) |
-
----
-
-## Roadmap — Version 2
-
-### High Priority
-- [ ] **Word (.docx) export** — Chapter Four tables formatted for thesis submission
-- [ ] **Variable Discovery Engine** — auto-build VariableDictionary from a real Word questionnaire
-- [ ] **Word questionnaire parser** — Stage 2 reader for `.docx` instruments
-- [ ] **SPSS syntax generator** — produce `.sps` file for direct SPSS import with variable labels
-
-### Analysis Extensions
-- [ ] **Correlation matrix** — Pearson/Spearman between all scale variables
-- [ ] **Reliability analysis** — Cronbach's alpha per section (internal consistency)
-- [ ] **ANOVA** — satisfaction scores by demographic group
-- [ ] **Regression** — predictors of overall satisfaction (logistic/linear)
-
-### Infrastructure
-- [ ] **Multi-study runner** — `python main.py run --all` to regenerate all studies
-- [ ] **Configuration validation** — check JSON files for errors before running
-- [ ] **Progress bar** — tqdm integration for large datasets (N > 1000)
-- [ ] **Study templates** — scaffolding tool: `python main.py new --template health_satisfaction`
-
-### Interface
-- [ ] **Web dashboard** — Streamlit app for point-and-click generation and visualisation
-- [ ] **PDF report** — auto-generated research summary PDF
+| v1.1.0-dev | July 2026 | Workflow/orchestration layer, plugin registry, schema versioning |
+| v1.0.0 | July 2026 | Full pipeline: domain model → generators → validation → analysis → export → CLI |
+| v0.1.0 | June 2026 | Initial dataset generator (rdg/ package) |
 
 ---
 
 ## License
 
 MIT — see [LICENSE](LICENSE)
-
----
-
-## Author
-
-Built by **Eminence-Pyro** with the Research Analysis Toolkit.
-Project journal: see [PROJECT_JOURNAL.md](PROJECT_JOURNAL.md)
