@@ -432,3 +432,76 @@ is retained temporarily for reference but will be removed in a future commit.
 The Analysis Engine — frequency tables, descriptive statistics, cross-tabulations.
 These consume the Dataset and return structured result objects that can be
 passed to exporters and report builders.
+
+
+---
+
+## Entry #008 — Stages 9–10 Complete: Analysis and Export Running
+
+**Date:** July 2026
+**Stages:** 9 (Analysis Engine), 10 (Export Engine)
+**Status:** ✅ Complete
+
+### What Was Built
+
+**Stage 9 — Analysis Engine**
+
+`analysis/frequencies.py`
+- `FrequencyRow`, `FrequencyTable` — structured result objects
+- `frequency_table(dataset, variable_name)` — one variable
+- `all_categorical(dataset, variable_names)` — batch for all categorical vars
+- Sort by frequency or value; cumulative percentages computed automatically
+
+`analysis/descriptives.py`
+- `DescriptiveStats` — mean, SD, min, Q1, median, Q3, max, skewness, kurtosis
+- `describe(dataset, variable_name)` — one variable
+- `describe_many(dataset, variable_names)` — batch
+- `LikertItemStats` — per-item stats with verbal interpretation
+- `LikertSummary` — all Likert items grouped by section + section/overall means
+- `likert_summary(dataset, questionnaire)` → **the core Chapter Four table function**
+- Verbal interpretation labels: "Very Dissatisfied" → "Very Satisfied"
+
+`analysis/crosstabs.py`
+- `CrosstabResult` — full crosstab with chi-square, df, p-value, Cramer's V
+- `crosstab(dataset, row_var, col_var)` — one pair
+- Scipy used for chi-square p-value; Wilson-Hilferty approximation as fallback
+- Warning note generated automatically when >20% of cells have expected count < 5
+
+**Stage 10 — Export Engine**
+
+`exporters/excel_exporter.py` — 9-sheet formatted workbook:
+1. Raw Dataset          — all 58 variables, alternating row colours
+2. Demographics         — demographic section only
+3. Questionnaire Data   — Likert items + section means + satisfaction category
+4. Observation Data     — 10 checklist items + obs_yes_count
+5. Descriptive Stats    — per-item mean/SD/interpretation by section (Chapter Four table)
+6. Frequency Tables     — block per categorical variable with cumulative percentages
+7. Crosstabulations     — 4 crosstabs (gender/education/marital/occupation × satisfaction) with chi-square
+8. Codebook             — full VariableDictionary
+9. Validation Report    — all 14 checks with colour-coded status
+
+`exporters/csv_exporter.py`:
+- Raw CSV — all labelled values
+- SPSS-ready CSV — numeric codes only, column names truncated to 8 chars
+- Companion label .txt file — SPSS variable labels and value codes
+
+### End-to-End Test Results (Seed 42)
+
+```
+7/7 pipeline steps passed
+14/14 validation checks: 0 warnings, 0 errors
+3 output files produced:
+  Pattern_of_Caregiver_Satisfact_YYYYMMDD.xlsx  (9 sheets)
+  Pattern_of_Caregiver_Sati_raw_YYYYMMDD.csv
+  Pattern_of_Caregiver_Sati_spss_YYYYMMDD.csv
+```
+
+### Stages Remaining
+
+| Stage | Status | Next step |
+|-------|--------|-----------|
+| 11 — User Interface (CLI) | Basic CLI via main.py already works | Enhance with --output flag, --list-variables |
+| Word (.docx) export | Placeholder in exporters/word_exporter.py | Stage 10 extension |
+| PDF export | Placeholder in exporters/pdf_exporter.py | Stage 10 extension |
+| Variable Discovery Engine | Stage 3 partially complete | Auto-build VD from Word questionnaire |
+| Web interface | Stage 11 — v2 | Streamlit or FastAPI |
