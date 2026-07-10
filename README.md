@@ -1,104 +1,149 @@
-# Research Dataset Generator
+# Research Analysis Toolkit
 
-A reusable Python tool for generating **statistically coherent, analysis-ready
-synthetic datasets** for academic research.
+A reusable, domain-driven Python toolkit for academic research workflows.
 
-Unlike simple random data generators, this tool models **realistic relationships
-between variables** — ensuring datasets are internally consistent, suitable for
-statistical analysis, and aligned with a real research instrument.
+## What This Is
 
-## Features
+Research Analysis Toolkit (RAT) is a modular software product that covers
+the full lifecycle of academic research data work:
 
-- Realistic demographic generation (age, gender, education, income, distance, etc.)
-- Likert-scale questionnaire responses with a configurable causal model
-- Facility observation checklist data consistent with satisfaction scores
-- Statistical validation before export (correlations, range checks, frequency checks)
-- Export to **Excel** (7 formatted sheets), **raw CSV**, **SPSS-ready CSV**, and **validation report**
-- **Study-agnostic core** — add any new study without touching the core modules
+| Step | Module |
+|------|--------|
+| Define your study | `research_engine/models/` — core domain objects |
+| Parse questionnaires | `research_engine/parsers/` — Word/JSON instrument import |
+| Calculate sample size | `research_engine/generators/sample_size.py` |
+| Generate synthetic datasets | `research_engine/generators/` |
+| Validate datasets | `research_engine/validators/` |
+| Run descriptive analysis | `research_engine/analysis/` |
+| Export to Excel/SPSS/PDF/Word | `research_engine/exporters/` |
+| Produce Chapter Four tables | `research_engine/reports/` |
 
-## Quick Start
+## Why This Exists
 
-```bash
-# 1. Clone
-git clone https://github.com/Eminence-Pyro/research-dataset-generator.git
-cd research-dataset-generator
+Generating research data manually is:
+- Time consuming and inconsistent
+- Prone to unrealistic variable relationships
+- Difficult to reproduce when the questionnaire changes
+- Disconnected from downstream analysis and reporting
 
-# 2. Install dependencies
-pip install -r requirements.txt
+This toolkit solves those problems by treating research as a **domain**,
+not a spreadsheet task. Every module works with the same core objects —
+`Study`, `Questionnaire`, `Question`, `Variable`, `Respondent`, `Dataset` —
+so a malaria study, an HIV study, a school health study, and an
+immunization study all use identical workflows.
 
-# 3. Run the default study
-python main.py
-
-# 4. Run with a different seed (produces a statistically equivalent but different dataset)
-python main.py --seed 123
-
-# 5. List available studies
-python main.py --list
-```
-
-## Project Structure
+## Architecture
 
 ```
-research-dataset-generator/
+research-analysis-toolkit/
 │
-├── rdg/                        # Core library (study-agnostic)
-│   ├── core/
-│   │   ├── demographics.py     # Generic demographic generator
-│   │   ├── questionnaire.py    # Generic Likert response generator
-│   │   ├── observation.py      # Generic observation checklist generator
-│   │   ├── validator.py        # Statistical consistency checks
-│   │   └── exporter.py         # Excel, CSV, SPSS, report export
-│   └── utils/
-│       └── console.py          # Terminal output helpers
+├── research_engine/               # Core library
+│   ├── models/                    # Domain model — the language of the application
+│   │   ├── study.py               # Study, Facility
+│   │   ├── questionnaire.py       # Questionnaire, Section, Question
+│   │   ├── variable.py            # Variable, VariableDictionary
+│   │   ├── respondent.py          # Respondent, Response
+│   │   └── dataset.py             # Dataset
+│   │
+│   ├── parsers/                   # Import instruments and frameworks
+│   │   ├── questionnaire_parser.py
+│   │   ├── workbook_reader.py
+│   │   └── json_loader.py
+│   │
+│   ├── generators/                # Synthetic data production
+│   │   ├── demographics.py
+│   │   ├── responses.py
+│   │   ├── observations.py
+│   │   └── sample_size.py
+│   │
+│   ├── validators/                # Consistency and quality checks
+│   │   └── dataset_validator.py
+│   │
+│   ├── analysis/                  # Statistical analysis
+│   │   ├── frequencies.py
+│   │   ├── descriptives.py
+│   │   ├── crosstabs.py
+│   │   └── charts.py
+│   │
+│   ├── exporters/                 # Output formats
+│   │   ├── excel_exporter.py
+│   │   ├── csv_exporter.py
+│   │   ├── spss_exporter.py
+│   │   ├── pdf_exporter.py
+│   │   └── word_exporter.py
+│   │
+│   └── reports/                   # Chapter Four and summary report builders
+│       ├── chapter_four.py
+│       └── codebook.py
 │
-├── studies/                    # One package per research study
-│   └── immunization_aba/       # Caregiver satisfaction, Aba North LGA
-│       ├── config.py           # Study constants
-│       ├── run.py              # Study-specific runner
-│       ├── demographics.json   # Population distributions
-│       ├── questionnaire.json  # Instrument sections and items
-│       └── observation.json    # Facility checklist items
+├── studies/                       # One package per research study
+│   └── immunization_aba/          # Caregiver satisfaction, Aba North LGA
 │
-├── output/                     # Generated files (git-ignored)
-│   └── immunization_aba/
-│
-├── main.py                     # CLI entry point
+├── output/                        # Generated files — git-ignored
+├── main.py                        # CLI entry point
 ├── requirements.txt
 └── PROJECT_JOURNAL.md
 ```
 
-## Adding a New Study
+## Version Roadmap
 
-1. Copy `studies/immunization_aba/` → `studies/<your_study>/`
-2. Update `config.py` with your study title, N, facilities
-3. Edit the JSON configs to match your population and instrument
-4. Update `run.py` ordinal/SPSS maps and codebook
-5. Run: `python main.py --study <your_study>`
+### v1.0 — Domain Foundation *(current)*
+- [ ] Core domain model (`Study`, `Questionnaire`, `Question`, `Variable`, `Respondent`, `Dataset`)
+- [ ] JSON-based questionnaire loader
+- [ ] Demographics generator (plugs into domain model)
+- [ ] Likert response generator with configurable causal model
+- [ ] Observation checklist generator
+- [ ] Statistical validator
+- [ ] Excel exporter (multi-sheet, formatted)
+- [ ] CSV and SPSS-ready export
+- [ ] Plain-text validation report
 
-The core modules in `rdg/core/` require **zero changes**.
+### v1.1 — Analysis Layer
+- [ ] Frequency tables
+- [ ] Descriptive statistics
+- [ ] Cross-tabulations
+- [ ] Chart generation (bar, pie, histogram)
 
-## Output Files
+### v1.2 — Report Generation
+- [ ] Chapter Four table builder
+- [ ] Codebook generator
+- [ ] Word (.docx) export
+- [ ] PDF export
 
-| File | Description |
-|------|-------------|
-| `dataset_YYYYMMDD.xlsx` | Excel workbook — Raw Data, Questionnaire, Observations, Summary Stats, Frequency Tables, Codebook, Validation |
-| `raw_YYYYMMDD.csv` | Full raw dataset (all variables, labelled) |
-| `spss_YYYYMMDD.csv` | Numeric-only dataset ready for SPSS import |
-| `validation_YYYYMMDD.txt` | Plain-text validation report |
+### v1.3 — Import Layer
+- [ ] Word questionnaire parser
+- [ ] Excel analysis framework reader / writer
+- [ ] Variable dictionary from questionnaire
+
+### v2.0 — Web Interface
+- [ ] Streamlit or FastAPI web UI
+- [ ] Study configuration via browser
+- [ ] Dataset preview and download
+
+## Quick Start
+
+```bash
+git clone https://github.com/Eminence-Pyro/research-analysis-toolkit.git
+cd research-analysis-toolkit
+pip install -r requirements.txt
+python main.py --list
+python main.py --study immunization_aba
+```
 
 ## Current Studies
 
 | Study | Folder | N | Status |
 |-------|--------|---|--------|
-| Caregiver Satisfaction with Immunization Services, Aba North LGA | `immunization_aba` | 120 | ✅ |
+| Caregiver Satisfaction with Immunization Services, Aba North LGA | `immunization_aba` | 120 | ✅ v0 |
 
 ## Technologies
 
 - Python 3.12+
 - numpy, pandas, scipy
-- openpyxl
-- Faker
-- rich (optional — for prettier terminal output)
+- openpyxl (Excel)
+- python-docx (Word export — v1.2)
+- reportlab (PDF export — v1.2)
+- rich (optional terminal output)
 
 ## License
 
