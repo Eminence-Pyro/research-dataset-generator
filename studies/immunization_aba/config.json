@@ -1,0 +1,42 @@
+{
+  "title": "Pattern of Caregiver Satisfaction with Immunization Services",
+  "setting": "Urban PHCs, Wards I-IV, Aba North LGA, Abia State",
+  "population": "Caregivers of children 0-23 months attending immunization clinics",
+  "target_n": 120,
+  "design": "Cross-sectional",
+  "sampling_technique": "Consecutive sampling",
+  "facilities": [
+    {
+      "id": 1,
+      "name": "Ward I PHC",
+      "ward": "I",
+      "lga": "Aba North",
+      "state": "Abia",
+      "satisfaction_effect": 0.3
+    },
+    {
+      "id": 2,
+      "name": "Ward II PHC",
+      "ward": "II",
+      "lga": "Aba North",
+      "state": "Abia",
+      "satisfaction_effect": 0.0
+    },
+    {
+      "id": 3,
+      "name": "Ward III PHC",
+      "ward": "III",
+      "lga": "Aba North",
+      "state": "Abia",
+      "satisfaction_effect": 0.2
+    },
+    {
+      "id": 4,
+      "name": "Ward IV PHC",
+      "ward": "IV",
+      "lga": "Aba North",
+      "state": "Abia",
+      "satisfaction_effect": -0.1
+    }
+  ]
+}
