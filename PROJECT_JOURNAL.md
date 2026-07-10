@@ -257,3 +257,87 @@ a short example in the module docstring showing how to instantiate the objects.
 | #003  | 0 | Package structure — layer responsibilities and dependency rules |
 | #004  | 0 | Official 11-stage development roadmap documented |
 | #005  | 0 | Coding standards — Python 3.12+, type hints, commit format, conventions |
+
+
+---
+
+## Entry #006 — Stage 1: Core Domain Model Complete
+
+**Date:** July 2026
+**Stage:** 1 — Core Domain Model
+**Status:** ✅ Complete
+
+### What Was Built
+
+Five domain model files, all in `research_engine/models/`:
+
+```
+variable.py       — MeasurementScale, MissingValueStrategy,
+                    Variable, VariableDictionary
+questionnaire.py  — QuestionType, Question, Section, Questionnaire,
+                    LIKERT_5_LABELS, LIKERT_5_AGREEMENT, LIKERT_5_FREQUENCY
+study.py          — StudyDesign, SamplingTechnique, Facility, Study
+respondent.py     — Response, Observation, Respondent
+dataset.py        — Dataset
+```
+
+### Key Design Decisions
+
+**Variable is the atomic unit of analysis, not Question**
+A Question exists on the questionnaire. A Variable exists in the dataset.
+They are related (every Question maps to exactly one Variable) but not
+the same thing. Keeping them separate allows the questionnaire structure
+to change without breaking the dataset schema.
+
+**Demographics are a dict, not fixed fields**
+`Respondent.demographics` is `dict[str, Any]` rather than typed attributes
+like `self.age`, `self.gender`. This was a deliberate choice: different
+studies collect different demographic variables. The VariableDictionary
+defines which demographics exist; the dict stores their values. Fixed typed
+attributes would make the Respondent class study-specific.
+
+**Dataset stores Respondents, not raw rows**
+A Dataset holds `dict[str, Respondent]`, not a list of dicts. This means
+that at any point in the pipeline, you can access the full domain object —
+its demographics, responses, observations — and compute things like
+`respondent.section_mean(["saq1","saq2","saq3"])` directly, without having
+to cross-reference separate data structures.
+
+**`to_flat_dict()` is the bridge to exporters**
+The transition from domain objects to tabular data (for Excel, CSV, SPSS)
+happens in one place: `Respondent.to_flat_dict()` and `Dataset.to_records()`.
+Exporters call these methods. They never walk the Respondent's internal
+structure directly. This means changing the Respondent's internal
+representation never breaks the exporters.
+
+**Study distributes respondents automatically**
+When facilities are added to a Study, `_distribute_respondents()` runs
+automatically. `target_n` divided equally by `n_facilities`. The remainder
+(if any) goes to the last facility. This is the correct statistical approach
+for equal probability systematic sampling across sites.
+
+### Stage 1 Deliverables Checklist
+
+- [x] `Variable` with MeasurementScale, allowed_values, valid_range, SPSS codes
+- [x] `VariableDictionary` — single source of truth for variable metadata
+- [x] `Question` with QuestionType, scale_labels, auto-default Likert labels
+- [x] `Section` — ordered container for Questions
+- [x] `Questionnaire` — ordered container for Sections, root of instrument
+- [x] `Facility` with satisfaction_effect for between-facility variation
+- [x] `Study` with automatic respondent distribution across facilities
+- [x] `Response` and `Observation` — typed answer containers
+- [x] `Respondent` with demographics dict, response/observation management,
+      likert_mean(), section_mean(), to_flat_dict()
+- [x] `Dataset` with respondent management, to_records(), to_dataframe(),
+      column_values(), summary()
+- [x] `models/__init__.py` — unified public API
+- [x] Type hints on all methods (`from __future__ import annotations`)
+- [x] Google-style docstrings on every class and public method
+- [x] Usage examples in module docstrings
+- [x] Validation in `__post_init__` where appropriate
+
+### What Stage 2 Will Build On This
+
+Stage 2 (Readers) will produce `Questionnaire` and `Study` objects
+from Word documents, Excel workbooks, and JSON config files.
+The domain model is now stable enough to receive them.
