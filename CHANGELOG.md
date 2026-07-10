@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0-dev] — July 2026 (in progress)
+
+### Added
+- `research_engine/workflow/pipeline.py` — `Pipeline` orchestration class (5 stages, stateful, chainable)
+- `research_engine/workflow/__init__.py` — `Pipeline`, `PipelineResult`, `AnalysisBundle`
+- `research_engine/plugins/registry.py` — `PluginRegistry` with decorator + lookup API
+- `research_engine/plugins/__init__.py` — global `registry` instance
+- `schema_version: "1.0"` field in all study JSON configs
+- `rat_version: "1.0.0"` field in study config.json
+
+### Changed
+- `cli/interface.py` `cmd_run` — now uses `Pipeline` instead of importing study `run.py` directly
+- `README.md` — complete overhaul: Implemented/In-Progress/Planned feature table,
+  v2 architecture diagram, honest status labels
+
+### Architecture
+- Engine and interface layers are now separated: `research_engine/` has no CLI imports
+- All interfaces (CLI, future web, API) must go through `Pipeline` — never call generators directly
+
+---
+
 ## [1.0.0] — July 2026
 
 ### Added — Full pipeline from domain model to export
