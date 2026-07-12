@@ -14,3 +14,10 @@ from research_engine.exporters.csv_exporter   import export_raw as export_raw_cs
 from research_engine.exporters.csv_exporter   import export_spss
 
 __all__ = ["export_excel", "export_raw_csv", "export_spss"]
+
+# Word / Chapter Four exporter (Milestone 1.1.A)
+from research_engine.exporters.word_exporter import export_word
+
+__all__ = [
+    "export_excel", "export_raw_csv", "export_spss", "export_word",
+]
