@@ -218,7 +218,18 @@ class Pipeline:
             study_title         = self.bundle.study.title,
             seed                = self.seed,
         )
-        self.output_files = [xl, raw, spss, docx]
+        # ── SPSS Syntax (.sps) — Milestone 1.1.A ─────────────
+        from research_engine.exporters.spss_exporter import export_spss_syntax
+        csv_fname = raw.name   # just the filename — researcher fills in path
+        sps = export_spss_syntax(
+            variable_dictionary = vd,
+            spss_maps           = self.spss_maps,
+            output_dir          = self.output_dir,
+            csv_filename        = csv_fname,
+            study_title         = self.bundle.study.title,
+            seed                = self.seed,
+        )
+        self.output_files = [xl, raw, spss, docx, sps]
         self._stage_times["export"] = time.perf_counter() - t
         return self
 
