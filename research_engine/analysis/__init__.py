@@ -54,3 +54,12 @@ from research_engine.analysis.reliability import (
     ItemReliability,
     ReliabilityReport,
 )
+from research_engine.analysis.charts import (
+    likert_bar_chart,
+    demographic_pie_chart,
+    demographic_bar_chart,
+    reliability_bar_chart,
+    satisfaction_heatmap,
+    save_chart,
+    all_charts,
+)
