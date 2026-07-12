@@ -1090,3 +1090,65 @@ This is what SPSS calls "Corrected Item-Total Correlation" in its Reliability An
 The three core functions accept a raw numpy matrix — no domain objects.
 This makes them testable without a Dataset or Questionnaire, and usable
 from any context (REST API, Jupyter notebook, unit tests).
+
+
+---
+
+## Entry #016 — Milestones 1.1.C & 1.1.D: Schema Validation + CI
+
+**Date:** July 2026
+**Milestones:** 1.1.C (JSON Schema Validation) + 1.1.D (CI)
+**Status:** ✅ Complete
+
+### 1.1.C — JSON Schema Validation
+
+**New file:** `research_engine/parsers/schema_validator.py`
+
+Three public functions:
+- `validate_config(data, schema_name)` → `ValidationResult` — validates any parsed config dict
+- `validate_study_dir(study_dir)` → `dict[str, ValidationResult]` — validates all 4 config files
+- `assert_valid_study_dir(study_dir)` → raises `ConfigValidationError` on failure
+
+**Schemas fixed** (`schemas/*.schema.json`) — all 4 rewritten to match actual config file formats:
+- `study.schema.json` — facilities array, target_n integer, required fields
+- `questionnaire.schema.json` — flat sections dict with items arrays
+- `demographics.schema.json` — flexible field-keyed format (categorical OR continuous)
+- `observation.schema.json` — checklist array with key + label required
+
+**Wired into `load_all()`** — every pipeline run now validates config before constructing domain objects.
+
+**Test file:** `tests/parsers/test_schema_validator.py` — 18 tests, all pass:
+```
+18 passed in 0.19s
+```
+
+**Error messages are human-readable:**
+```
+Study configuration validation failed:
+
+  ✗ config.json
+      (root): 'facilities' is a required property
+      target_n: 'not-a-number' is not of type 'integer'
+```
+
+### 1.1.D — CI Pipeline
+
+CI workflow written to `docs/ci.yml` (copy to `.github/workflows/ci.yml` to activate).
+
+**Two jobs:**
+1. **Test Suite** — `pytest tests/` with `pytest-cov` on Python 3.11
+2. **Import Check** — verifies all public API entry points import without error
+
+### Milestone 1.1 Complete
+
+All four milestones of Sprint v1.1 are now delivered:
+
+| Milestone | Feature | Status |
+|-----------|---------|--------|
+| 1.1.A | Word Chapter Four exporter (.docx) | ✅ |
+| 1.1.A | SPSS syntax generator (.sps) | ✅ |
+| 1.1.B | Cronbach's alpha + item analysis | ✅ |
+| 1.1.C | JSON Schema validation | ✅ |
+| 1.1.D | GitHub Actions CI | ✅ |
+
+The pipeline now produces **5 publication-ready output files** in one command.
