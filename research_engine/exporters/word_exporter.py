@@ -44,6 +44,7 @@ from research_engine.validators.dataset_validator import ValidationReport
 from research_engine.analysis.descriptives import LikertSummary
 from research_engine.analysis.frequencies  import FrequencyTable
 from research_engine.analysis.crosstabs    import CrosstabResult
+from research_engine.analysis.reliability   import ReliabilityReport, SectionReliability
 
 
 # ── Colour palette (RGB) ──────────────────────────────────────
@@ -352,6 +353,61 @@ def _write_crosstab_table(doc: Document, ct: CrosstabResult,
     doc.add_paragraph()
 
 
+
+# ══════════════════════════════════════════════════════════════
+# Reliability table builders
+# ══════════════════════════════════════════════════════════════
+
+def _write_reliability_summary(doc: "Document", report: "ReliabilityReport",
+                                table_num: int) -> int:
+    """Summary table: one row per section + overall row."""
+    import numpy as np
+    doc.add_paragraph()
+    _caption(doc, f"Table {table_num}: Cronbach\u2019s Alpha Reliability Coefficients")
+    doc.add_paragraph()
+
+    rows_data = report.to_summary_rows()
+    n_rows    = 1 + len(rows_data)
+    table     = _make_table(doc, n_rows, 6)
+    headers   = ["Section", "Title", "Items", "N", "\u03b1", "Interpretation"]
+    widths    = [1.8, 6.5, 1.2, 1.2, 1.5, 3.3]
+    _header_row(table, headers, widths)
+
+    for idx, row in enumerate(rows_data):
+        is_total = (idx == len(rows_data) - 1)
+        shade    = (idx % 2 == 0)
+        _data_row(table, idx + 1, list(row), total=is_total, shade=shade)
+
+    doc.add_paragraph()
+    return table_num + 1
+
+
+def _write_reliability_item_table(doc: "Document",
+                                   sec_rel: "SectionReliability",
+                                   table_num: int) -> int:
+    """Per-section item-level reliability table."""
+    import numpy as np
+    doc.add_paragraph()
+    _caption(doc,
+             f"Table {table_num}: Item Analysis for Section {sec_rel.section_key} "
+             f"\u2014 {sec_rel.section_title}")
+    doc.add_paragraph()
+
+    n_rows = 1 + len(sec_rel.items)
+    table  = _make_table(doc, n_rows, 7)
+    headers = ["Item No.", "Statement", "Mean", "SD",
+               "r (item-total)", "r Interpretation", "\u03b1 if Deleted"]
+    widths  = [1.5, 5.8, 1.2, 1.2, 1.8, 3.5, 1.8]
+    _header_row(table, headers, widths)
+
+    for idx, item in enumerate(sec_rel.items):
+        shade = (idx % 2 == 0)
+        _data_row(table, idx + 1, list(item.to_row()), shade=shade)
+
+    doc.add_paragraph()
+    return table_num + 1
+
+
 # ══════════════════════════════════════════════════════════════
 # Public API
 # ══════════════════════════════════════════════════════════════
@@ -364,6 +420,7 @@ def export_word(
     likert_sum:          LikertSummary,
     freq_tables:         list[FrequencyTable],
     crosstab_results:    list[CrosstabResult],
+    reliability_report:  "ReliabilityReport | None" = None,
     output_dir:          str | Path,
     study_title:         str = "Research Study",
     seed:                int = 42,
@@ -380,6 +437,7 @@ def export_word(
     likert_sum          : LikertSummary from analysis.descriptives.likert_summary()
     freq_tables         : list[FrequencyTable] from analysis.frequencies.all_categorical()
     crosstab_results    : list[CrosstabResult] from analysis.crosstabs.crosstab()
+    reliability_report  : ReliabilityReport from analysis.reliability.full_reliability() — optional
     output_dir          : directory where the .docx file will be written
     study_title         : study title for the document heading
     seed                : random seed used (recorded in the document)
@@ -433,10 +491,31 @@ def export_word(
     _write_summary_table(doc, likert_sum, questionnaire, table_num)
     table_num += 1
 
-    # ── 4.2 Frequency Distributions ─────────────────────────
+
+    # ── 4.2 Reliability Analysis ────────────────────────────
+    if reliability_report is not None:
+        doc.add_page_break()
+        _heading(doc, "4.2 Reliability Analysis (Cronbach\u2019s Alpha)", level=2)
+        _body(doc,
+              "Cronbach\u2019s alpha (\u03b1) was computed to assess the internal "
+              "consistency of each subscale. An alpha coefficient of 0.70 or above "
+              "is generally considered acceptable (Nunnally & Bernstein, 1994).")
+        doc.add_paragraph()
+
+        # Summary table
+        table_num = _write_reliability_summary(doc, reliability_report, table_num)
+
+        # Per-section item tables
+        for sec_rel in reliability_report.sections:
+            if sec_rel.items:
+                table_num = _write_reliability_item_table(doc, sec_rel, table_num)
+
+        doc.add_paragraph()
+
+    # ── (renumber) Frequency Distributions ─────────────────────────
     if freq_tables:
         doc.add_page_break()
-        _heading(doc, "4.2 Frequency Distributions", level=2)
+        _heading(doc, "4.3 Frequency Distributions", level=2)
         _body(doc,
               "The following tables present the frequency distributions "
               "of the demographic and categorical variables.")
@@ -449,7 +528,7 @@ def export_word(
     # ── 4.3 Cross-Tabulations ───────────────────────────────
     if crosstab_results:
         doc.add_page_break()
-        _heading(doc, "4.3 Cross-Tabulations", level=2)
+        _heading(doc, "4.4 Cross-Tabulations", level=2)
         _body(doc,
               "The following tables examine the associations between demographic "
               "variables and satisfaction category using chi-square tests.")
