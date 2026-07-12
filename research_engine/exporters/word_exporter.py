@@ -420,10 +420,10 @@ def export_word(
     likert_sum:          LikertSummary,
     freq_tables:         list[FrequencyTable],
     crosstab_results:    list[CrosstabResult],
-    reliability_report:  "ReliabilityReport | None" = None,
     output_dir:          str | Path,
     study_title:         str = "Research Study",
     seed:                int = 42,
+    reliability_report:  "ReliabilityReport | None" = None,
 ) -> Path:
     """
     Export a submission-ready Chapter Four Word document.
