@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "title": "Patient Satisfaction Questionnaire",
+  "sections": {
+    "A": {
+      "title": "Access and Registration",
+      "items": [
+        { "number": "A1", "variable_name": "access_q1",
+          "text": "The health facility is easy to reach from my home.", "scale": "Likert5" },
+        { "number": "A2", "variable_name": "access_q2",
+          "text": "The registration process was handled promptly.", "scale": "Likert5" },
+        { "number": "A3", "variable_name": "access_q3",
+          "text": "The waiting time before seeing a provider was acceptable.", "scale": "Likert5" }
+      ]
+    },
+    "B": {
+      "title": "Quality of Care",
+      "items": [
+        { "number": "B1", "variable_name": "quality_q1",
+          "text": "The provider listened carefully to my concerns.", "scale": "Likert5" },
+        { "number": "B2", "variable_name": "quality_q2",
+          "text": "The provider explained my diagnosis clearly.", "scale": "Likert5" },
+        { "number": "B3", "variable_name": "quality_q3",
+          "text": "I was satisfied with the treatment I received.", "scale": "Likert5" }
+      ]
+    },
+    "C": {
+      "title": "Overall Satisfaction",
+      "items": [
+        { "number": "C1", "variable_name": "overall_q1",
+          "text": "Overall, I am satisfied with the services at this facility.", "scale": "Likert5" },
+        { "number": "C2", "variable_name": "overall_q2",
+          "text": "I would recommend this facility to others.", "scale": "Likert5" }
+      ]
+    }
+  }
+}
