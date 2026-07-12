@@ -764,3 +764,94 @@ CHANGELOG        → "What changed between versions?"
 ```
 
 Each document has exactly one audience and one job.
+
+
+---
+
+## Entry #012 — Architecture Freeze: rdg/ Archived, docs/ Expanded, schemas/, tests/, examples/, ROADMAP.md
+
+**Date:** July 2026
+**Focus:** Responding to the second architecture review — freeze and clean up
+**Status:** ✅ Complete
+
+### Changes Made
+
+**1. rdg/ archived → legacy/rdg/**
+The v0 package is archived, not deleted. It remains available for reference
+but will never receive new code. The question "should this go in rdg/ or
+research_engine/?" is now permanently answered: research_engine/.
+
+**2. studies/immunization_aba/config.py deleted**
+config.json is the single source of truth for study configuration.
+Python files in studies/ are for behavioral logic (run.py) only.
+
+**3. docs/ expanded into architecture/ subdirectory + adr/**
+```
+docs/
+├── architecture/
+│   ├── overview.md     — layer diagram and rules
+│   ├── workflow.md     — Pipeline stages and lazy execution
+│   ├── plugins.md      — plugin types, registration, v2 roadmap
+│   └── study-schema.md — JSON field reference for all four config files
+└── adr/
+    ├── README.md
+    ├── 001-domain-objects-over-dicts.md
+    ├── 002-json-study-configs.md
+    ├── 003-causal-response-model.md
+    ├── 004-pipeline-orchestration.md
+    └── 005-plugin-registry.md
+```
+
+ADRs capture the "why" behind architectural decisions in a format that can be
+reviewed, discussed, and updated as the project evolves.
+
+**4. schemas/ — formal JSON Schema (Draft 7) files**
+```
+schemas/
+├── study.schema.json
+├── questionnaire.schema.json
+├── demographics.schema.json
+└── observation.schema.json
+```
+These will be used by json_loader.py in v1.1 to validate study configs before
+the pipeline runs. jsonschema errors are far more useful than runtime KeyErrors.
+
+**5. tests/ — real test files, not placeholders**
+```
+tests/
+├── models/
+│   ├── test_variable.py       — 8 tests for Variable, VariableDictionary
+│   └── test_questionnaire.py  — 7 tests for Question, Section, Questionnaire
+└── workflow/
+    └── test_pipeline.py       — 5 end-to-end integration tests
+```
+Plus `__init__.py` placeholders in parsers/, generators/, validators/, analysis/, exporters/.
+
+**6. examples/ — real study templates**
+```
+examples/
+├── simple_health_survey/   — minimal 8-item cross-sectional template (all 4 files)
+└── malaria_kap/            — KAP study config.json scaffold
+```
+
+**7. ROADMAP.md — master plan**
+Single document covering:
+- Version status table (v0.1 → v1.0 → v1.1 → v2.0)
+- v1.1 milestones with task-level detail
+- v2.0 planned features (A through I)
+- The frozen directory structure
+- The rule: no new top-level directories without updating ROADMAP first
+
+### The Reviewer's Core Point
+
+"I'd freeze the folder structure. No more moving files. No more renaming packages.
+From this point forward, every commit should add working functionality."
+
+This entry marks that freeze. The architecture is stable. The structure is documented.
+The next commit will be a working feature — not a folder move.
+
+### What Is Actually Next
+
+v1.1, Milestone A: Word (.docx) Chapter Four export.
+The reviewer's recommended order (domain objects → parsers → generators → validators)
+has already been followed in full. The next layer is output — the Word exporter.
