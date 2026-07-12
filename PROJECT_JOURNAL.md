@@ -927,3 +927,93 @@ computation; the exporter owns only the rendering.
 - [ ] `analysis/reliability.py` — Cronbach's alpha per section
 - [ ] Schema validation in `json_loader.py`
 - [ ] CI: `pytest` in GitHub Actions
+
+
+---
+
+## Entry #014 — Milestone 1.1.A (Part 2): SPSS Syntax Exporter
+
+**Date:** July 2026
+**Milestone:** 1.1.A — Document Output
+**Status:** ✅ Complete
+
+### What Was Built
+
+`research_engine/exporters/spss_exporter.py` — `export_spss_syntax()` function
+
+Produces a complete, ready-to-run SPSS syntax file (.sps) — 474 lines, ~13 KB.
+
+**8 syntax blocks generated:**
+
+| Block | Purpose |
+|-------|---------|
+| Header comment | Study title, date, seed, variable count, instructions |
+| GET DATA | Imports the SPSS-ready CSV with correct delimiters and encoding |
+| VARIABLE LABELS | All 53 variables with full human-readable labels |
+| VALUE LABELS | Categorical variables (gender, education…) + Likert items (Strongly Disagree…Strongly Agree) |
+| MISSING VALUES | 9 for categoricals/ordinals, 99 for continuous/scale |
+| FORMATS | F2.0 for categoricals, F5.2 for Likert, F8.2 for continuous |
+| VARIABLE LEVEL | NOMINAL / ORDINAL / SCALE per variable |
+| EXECUTE | Runs the import |
+
+**Sample output verified:**
+```
+/GENDER
+  1 'Male'
+  2 'Female'
+
+/EDUCATION
+  1 'No formal education'
+  2 'Primary'
+  3 'Secondary'
+  4 'Tertiary'
+
+/SAQ1
+  1 'Strongly Disagree'
+  2 'Disagree'
+  3 'Neutral'
+  4 'Agree'
+  5 'Strongly Agree'
+
+/SATISFACTION_CATEGORY
+  1 'Highly Dissatisfied'
+  2 'Dissatisfied'
+  3 'Neutral'
+  4 'Satisfied'
+  5 'Highly Satisfied'
+```
+
+### Engineering Notes
+
+**The Likert label detection bug**
+The initial version applied `1 '1'`, `2 '2'`... instead of verbal labels because
+`variable.spss_codes` was set to `{'1': 1, '2': 2, ...}` — all-numeric keys —
+which triggered Priority 1 before reaching the Likert detection branch.
+
+Fix: `_is_numeric_coded(codes)` helper. If all dictionary keys are digit strings,
+the codes are auto-generated fillers and should be ignored. The Likert branch then
+applies the standard `Strongly Disagree / Disagree / Neutral / Agree / Strongly Agree`
+labels.
+
+**Priority order for VALUE LABELS:**
+1. `spss_maps` from `run.py` — if keys are non-numeric (real category names)
+2. `variable.spss_codes` — if keys are non-numeric
+3. Likert detection: ORDINAL + non-demographic section + `allowed_values == [1,2,3,4,5]`
+
+### Pipeline State
+
+The pipeline now produces 5 output files from `python main.py run --study immunization_aba`:
+
+```
+.xlsx  — 9-sheet Excel workbook
+.csv   — raw data (labelled values)
+.csv   — SPSS-ready CSV (numeric codes)
+.docx  — Chapter Four (APA tables)   ← Milestone 1.1.A Part 1
+.sps   — SPSS syntax file             ← Milestone 1.1.A Part 2
+```
+
+### Remaining Milestone 1.1 Work
+
+- [ ] `analysis/reliability.py` — Cronbach's alpha per section
+- [ ] Schema validation in `json_loader.py`
+- [ ] CI: `pytest` in GitHub Actions
