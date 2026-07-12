@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "checklist": [
+    { "variable_name": "cleanliness",   "label": "Facility is visibly clean and tidy",
+      "anchor": "environment", "base_probability": 0.72 },
+    { "variable_name": "equipment",     "label": "Basic equipment is available and functional",
+      "anchor": "service",     "base_probability": 0.80 },
+    { "variable_name": "waiting_area",  "label": "Waiting area has adequate seating",
+      "anchor": "environment", "base_probability": 0.65 },
+    { "variable_name": "staff_visible", "label": "Staff are present and identifiable",
+      "anchor": "service",     "base_probability": 0.88, "distance_sensitive": false },
+    { "variable_name": "privacy",       "label": "Consultation rooms offer adequate privacy",
+      "anchor": "environment", "base_probability": 0.60 }
+  ]
+}
