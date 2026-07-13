@@ -582,6 +582,3 @@ Output the complete revised chapter:"""
 
     session.set_chapter(chapter_number, new_content, notes=notes, status="revised")
     return session.chapters[chapter_number]
-'''
-
-print(f"revise_chapter function: {len(REVISE_FUNC.strip().splitlines())} lines")
