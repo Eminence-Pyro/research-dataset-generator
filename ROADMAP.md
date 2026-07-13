@@ -321,3 +321,29 @@ research-analysis-toolkit/
 │   └── rdg/
 └── output/
 ```
+
+
+---
+
+## v2.0 — Research Project Assistant
+
+### Sprint 2.0 — Core Writer Engine ✅
+- [x] `research_engine/writer/project_session.py` — ProjectSession, ProjectMetadata, ChapterContent
+- [x] `research_engine/writer/guideline_parser.py` — extract_text, parse_guideline, regex heuristics
+- [x] `research_engine/writer/chapter_writer.py` — write_chapter (Ch 1–5), AI metadata extraction
+- [x] `research_engine/cli/project_commands.py` — full CLI: new/upload/write/status/export/dataset/list
+- [x] CLI integrated — `python main.py project <command>`
+
+### Sprint 2.1 — Planned
+- [ ] Word exporter for full project (Ch 1–5 in one .docx with cover page, TOC, references)
+- [ ] Chapter revision command (`project revise --session SID --chapter N --instruction "..."`)
+- [ ] Reference list generator (APA/Harvard/Vancouver) from in-text citations
+- [ ] Dataset auto-configuration from session metadata (questionnaire.json + demographics.json)
+- [ ] Interactive `project wizard` — guided setup via CLI prompts
+
+### Sprint 2.2 — Planned
+- [ ] Web UI (Flask/FastAPI) — upload, write, preview, download
+- [ ] PDF export (reportlab)
+- [ ] SPSS label synchronisation between Chapter 3 methodology and generated .sps file
+- [ ] Plagiarism-safe citation diversity scoring
+- [ ] Multi-study sessions (compare two projects in one session)
