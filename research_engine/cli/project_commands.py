@@ -441,3 +441,177 @@ def _print_progress(session):
             print(f"    {green('✅')} Ch {n}: {title}{dim(wc_str)}")
         else:
             print(f"    {dim('⬜')} Ch {n}: {dim(title)}")
+
+# ══════════════════════════════════════════════════════════════
+# project revise  (Tier 1 #1)
+# ══════════════════════════════════════════════════════════════
+
+def cmd_project_revise(args, project_root: Path) -> int:
+    from research_engine.writer import revise_chapter
+
+    session = _load_session(project_root, args.session)
+    if session is None: return 1
+
+    chapter     = int(getattr(args, "chapter", 1))
+    instruction = getattr(args, "instruction", "") or ""
+    model       = getattr(args, "model", "gpt-4o") or "gpt-4o"
+
+    if not instruction:
+        print(red("  --instruction is required. Example:"))
+        print(dim('  --instruction "Make the problem statement more focused"'))
+        return 1
+
+    existing = session.get_chapter(chapter)
+    if existing is None:
+        print(red(f"  Chapter {chapter} not written yet. Run 'project write' first."))
+        return 1
+
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        print(red("  OPENAI_API_KEY not set.")); return 1
+
+    print(gold(f"\n  ✏️  Revising Chapter {chapter}…"))
+    print(dim(f"     Instruction: {instruction}"))
+    print(dim(f"     Model: {model}"))
+
+    try:
+        result = revise_chapter(session, chapter, instruction, api_key=api_key, model=model)
+        _save_session(session, project_root)
+        print(green(f"  ✅ Chapter {chapter} revised ({result.word_count:,} words)"))
+        print(dim(f"     {result.model_notes}"))
+    except Exception as exc:
+        print(red(f"  ✗ Revision failed: {exc}")); return 1
+    return 0
+
+
+# ══════════════════════════════════════════════════════════════
+# project references  (Tier 1 #2)
+# ══════════════════════════════════════════════════════════════
+
+def cmd_project_references(args, project_root: Path) -> int:
+    from research_engine.writer import generate_references, format_reference_list
+
+    session = _load_session(project_root, args.session)
+    if session is None: return 1
+
+    fmt     = getattr(args, "format", "txt") or "txt"
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+
+    print(gold("\n  📚 Generating reference list…"))
+    refs = generate_references(session, api_key=api_key)
+    print(green(f"  ✅ {len(refs)} unique references found"))
+
+    out_dir = project_root / "output" / f"project_{session.session_id}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    if fmt == "md":
+        text = refs.to_markdown()
+        path = out_dir / "references.md"
+    else:
+        text = refs.to_text()
+        path = out_dir / "references.txt"
+
+    path.write_text(text, encoding="utf-8")
+    print(dim(f"  Saved: {path}"))
+    print()
+    # Preview first 5
+    for e in refs.entries[:5]:
+        print(dim(f"  {e.full_text[:90]}"))
+    if len(refs) > 5:
+        print(dim(f"  ... and {len(refs)-5} more"))
+    return 0
+
+
+# ══════════════════════════════════════════════════════════════
+# project build  (Tier 1 #3 — full study file generation)
+# ══════════════════════════════════════════════════════════════
+
+def cmd_project_build(args, project_root: Path) -> int:
+    from research_engine.writer import save_study_files
+
+    session = _load_session(project_root, args.session)
+    if session is None: return 1
+
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    print(gold("\n  🔨 Building study config files (questionnaire + demographics)…"))
+
+    try:
+        created = save_study_files(session, project_root, api_key=api_key)
+        _save_session(session, project_root)
+        for fname, path in created.items():
+            print(green(f"  ✅ {fname}  →  {path.relative_to(project_root)}"))
+        study_name = f"project_{session.session_id}"
+        print()
+        print(dim("  To generate the dataset, run:"))
+        print(cyan(f"    python main.py run --study {study_name}"))
+    except Exception as exc:
+        print(red(f"  ✗ Failed: {exc}")); return 1
+    return 0
+
+
+# ══════════════════════════════════════════════════════════════
+# project ch4  (Tier 1 #4 — Ch4 with real data)
+# ══════════════════════════════════════════════════════════════
+
+def cmd_project_ch4(args, project_root: Path) -> int:
+    from research_engine.writer import write_chapter4_with_data
+
+    session = _load_session(project_root, args.session)
+    if session is None: return 1
+
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        print(red("  OPENAI_API_KEY not set.")); return 1
+
+    model = getattr(args, "model", "gpt-4o") or "gpt-4o"
+    print(gold("\n  📊 Writing Chapter 4 with real dataset analysis…"))
+
+    try:
+        result = write_chapter4_with_data(session, project_root, api_key=api_key, model=model)
+        _save_session(session, project_root)
+        print(green(f"  ✅ Chapter 4 written ({result.word_count:,} words)"))
+        print(dim(f"     {result.model_notes}"))
+    except Exception as exc:
+        print(red(f"  ✗ Failed: {exc}")); return 1
+    return 0
+
+
+# ══════════════════════════════════════════════════════════════
+# project fullexport  (Tier 1 #5 — full submission docx)
+# ══════════════════════════════════════════════════════════════
+
+def cmd_project_fullexport(args, project_root: Path) -> int:
+    from research_engine.exporters.project_docx_exporter import export_project_docx
+    from research_engine.writer import generate_references
+
+    session = _load_session(project_root, args.session)
+    if session is None: return 1
+
+    api_key  = os.environ.get("OPENAI_API_KEY", "")
+    out_dir  = project_root / "output" / f"project_{session.session_id}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"{session.session_id}_full_project.docx"
+
+    print(gold("\n  📄 Generating full submission document…"))
+
+    # Generate reference list first
+    refs = None
+    if session.chapters:
+        print(dim("  Generating references…"))
+        refs = generate_references(session, api_key=api_key)
+        print(dim(f"  {len(refs)} references found"))
+
+    try:
+        result = export_project_docx(session, out_path, reference_list=refs)
+        size_kb = result.stat().st_size // 1024
+        print(green(f"  ✅ Full project exported: {result.name}  ({size_kb} KB)"))
+        print(dim(f"  Location: {result}"))
+        print()
+        done = session.chapters_done
+        total_wc = sum(session.chapters[n].word_count for n in done)
+        print(dim(f"  Chapters included: {done}"))
+        print(dim(f"  Total word count:  ~{total_wc:,} words"))
+        print(dim(f"  References:        {len(refs) if refs else 0}"))
+    except Exception as exc:
+        print(red(f"  ✗ Export failed: {exc}")); import traceback; traceback.print_exc(); return 1
+    return 0
