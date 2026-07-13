@@ -395,6 +395,9 @@ function showLoading(msg) {{
     </div>
     <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
       <a href="/session/{sid}/upload" class="btn btn-ghost btn-sm">📎 Upload File</a>
+      <a href="/session/{sid}/feedback" class="btn btn-ghost btn-sm">💬 Feedback</a>
+      <a href="/session/{sid}/syncspss" class="btn btn-ghost btn-sm"
+         onclick="showLoading('Syncing SPSS…')">🔄 Sync SPSS</a>
       <a href="/session/{sid}/build" class="btn btn-ghost btn-sm"
          onclick="showLoading('Generating study files…')">🔨 Build Dataset</a>
       <a href="/session/{sid}/ch4data" class="btn btn-purple btn-sm"
@@ -655,6 +658,103 @@ def full_export(sid):
     except Exception as exc:
         flash(f"Export failed: {exc}", "error")
         return redirect(url_for("session_view", sid=sid))
+
+
+
+@app.route("/session/<sid>/feedback", methods=["GET", "POST"])
+def supervisor_feedback(sid):
+    s = _load(sid)
+    if not s: return redirect(url_for("index"))
+
+    if request.method == "POST":
+        text = request.form.get("feedback_text", "").strip()
+        file = request.files.get("feedback_file")
+        if file and file.filename:
+            try:
+                from research_engine.writer import extract_text
+                tmp = UPLOAD_DIR / f"{sid}_feedback_{file.filename}"
+                file.save(str(tmp))
+                text = extract_text(tmp)
+            except Exception as exc:
+                flash(f"Could not read file: {exc}", "error")
+                return redirect(url_for("supervisor_feedback", sid=sid))
+
+        if not text:
+            flash("Please enter feedback text or upload a file.", "error")
+            return redirect(url_for("supervisor_feedback", sid=sid))
+
+        api_key = _api_key()
+        if not api_key:
+            flash("OPENAI_API_KEY not set.", "error")
+            return redirect(url_for("session_view", sid=sid))
+
+        try:
+            from research_engine.writer import parse_feedback, apply_feedback
+            items   = parse_feedback(text)
+            revised = apply_feedback(s, items, api_key=api_key)
+            _save(s)
+            flash(f"Applied {len(items)} feedback items. Revised chapters: {list(revised.keys())}.", "success")
+        except Exception as exc:
+            flash(f"Feedback processing failed: {exc}", "error")
+        return redirect(url_for("session_view", sid=sid))
+
+    return render_template_string(f"""<!DOCTYPE html><html><head>
+<title>Supervisor Feedback — RAT</title>{BASE_STYLE}</head><body>
+{NAV}
+<script>function showLoading(m){{document.getElementById("loading-overlay").classList.add("show");document.getElementById("loading-msg").textContent=m||"Working…";}}</script>
+<div class="container" style="max-width:700px">
+  <div class="page-title">💬 Supervisor Feedback</div>
+  <div class="page-sub">Paste your supervisor's comments — each item will be mapped to the right chapter and revised automatically</div>
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Paste Feedback (numbered list works best)</label>
+        <textarea name="feedback_text" placeholder="Examples:
+1. The problem statement in chapter one is too broad
+2. The literature review lacks critical synthesis
+3. Show the Yamane formula with actual values in methodology
+4. Table 4.3 needs a proper heading and source note
+5. The conclusion must draw implications, not just restate findings" style="min-height:200px"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Or Upload Feedback File (.docx / .txt)</label>
+        <input type="file" name="feedback_file" accept=".docx,.txt,.pdf">
+      </div>
+      <button type="submit" class="btn btn-gold"
+        onclick="showLoading('Applying supervisor feedback… ~60 seconds')">
+        Apply Feedback →
+      </button>
+      <a href="/session/{sid}" class="btn btn-ghost" style="margin-left:0.5rem">Cancel</a>
+    </form>
+  </div>
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title">How it works</div>
+    <div class="text-sm text-light" style="line-height:1.8">
+      Each feedback item is automatically mapped to its chapter based on keywords
+      ("literature review" → Ch 2, "methodology" → Ch 3, etc.). Items for the same
+      chapter are combined into one revision call to save time and credits.
+    </div>
+  </div>
+</div></body></html>""")
+
+
+@app.route("/session/<sid>/syncspss")
+def sync_spss(sid):
+    s = _load(sid)
+    if not s: return redirect(url_for("index"))
+    api_key = _api_key()
+    study_dir = ROOT / "studies" / f"project_{sid}"
+    if not study_dir.exists():
+        flash("No study directory found. Run 'Build Dataset' first.", "error")
+        return redirect(url_for("session_view", sid=sid))
+    try:
+        from research_engine.writer import write_methods_section
+        write_methods_section(s, study_dir, api_key=api_key)
+        _save(s)
+        flash("Chapter 3 instrument section synced with questionnaire data.", "success")
+    except Exception as exc:
+        flash(f"Sync failed: {exc}", "error")
+    return redirect(url_for("session_view", sid=sid))
 
 
 if __name__ == "__main__":
